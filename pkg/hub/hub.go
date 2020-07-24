@@ -4,6 +4,12 @@ import "log"
 
 const EVENT_CLIENT_UPDATE = "users!"
 
+type clientUpdate struct {
+	Clients map[string][]string `json:"clients"`
+	Changed string              `json:"changed"`
+	IsNew   bool                `json:"isNew"`
+}
+
 type Hub struct {
 	emit       chan Message
 	register   chan *Client
@@ -35,18 +41,22 @@ func (self *Hub) Run() {
 				go self.emitClientUpdate(client.id, false)
 			}
 		case msg := <-self.emit:
-			for _, v := range self.clients {
-				go func(c chan Message) { c <- msg }(v.send)
+			for _, client := range self.clients {
+				if contains(client.events, msg.Event) {
+					go func(c chan Message) { c <- msg }(client.send)
+				}
 			}
 		}
-
 	}
 }
 
-type clientUpdate struct {
-	Clients map[string][]string `json:"clients"`
-	Changed string              `json:"changed"`
-	IsNew   bool                `json:"isNew"`
+func contains(arr []string, value string) bool {
+	for _, v := range arr {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 func (self *Hub) emitClientUpdate(id string, isNew bool) {
