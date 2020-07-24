@@ -2,6 +2,7 @@ package clients
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -12,9 +13,11 @@ type wsClient struct {
 	ws *websocket.Conn
 }
 
-func NewWsClient(host string, events []string) (*wsClient, error) {
+func NewWsClient(host, token string, events []string) (*wsClient, error) {
 	url := fmt.Sprintf("ws://%s?events=%s", host, strings.Join(events, ","))
-	ws, _, err := websocket.DefaultDialer.Dial(url, nil)
+	ws, _, err := websocket.DefaultDialer.Dial(url, http.Header{
+		"Authorization": []string{"Bearer " + token},
+	})
 	if err != nil {
 		return nil, err
 	}

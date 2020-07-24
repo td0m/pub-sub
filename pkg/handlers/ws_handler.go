@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/td0m/pub-sub/pkg/auth"
 	"github.com/td0m/pub-sub/pkg/hub"
 )
 
@@ -32,7 +32,8 @@ type wsHandler struct {
 }
 
 func NewWsHandler(h *hub.Hub) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return auth.WithClaims(func(w http.ResponseWriter, r *http.Request) {
+		claims := r.Context().Value("claims").(*auth.Claims)
 		eventsParam := r.URL.Query().Get("events")
 		events := strings.Split(strings.ToLower(eventsParam), ",")
 
@@ -44,13 +45,13 @@ func NewWsHandler(h *hub.Hub) http.HandlerFunc {
 
 		handler := wsHandler{
 			hub:    h,
-			client: hub.NewClient(randId(10), events),
+			client: hub.NewClient(claims.Id, events),
 			conn:   conn,
 		}
 		h.Register(&handler.client)
 		go handler.reader()
 		go handler.writer()
-	}
+	})
 }
 
 func (self *wsHandler) reader() {
@@ -97,14 +98,4 @@ func (self *wsHandler) writer() {
 			}
 		}
 	}
-}
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func randId(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return string(b)
 }

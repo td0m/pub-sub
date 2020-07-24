@@ -9,9 +9,14 @@ import (
 )
 
 func main() {
+	token := os.Getenv("TOKEN")
+	if len(token) == 0 {
+		fmt.Println("Please provide a TOKEN")
+		return
+	}
 	host := "localhost:8080/ws"
-	events := []string{"users!"}
-	client, err := clients.NewWsClient(host, events)
+	events := []string{"users"}
+	client, err := clients.NewWsClient(host, token, events)
 	if err != nil {
 		fmt.Println(err)
 		return
