@@ -3,41 +3,39 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"net/http"
 	"os"
-	"strings"
 
-	"github.com/gorilla/websocket"
+	"github.com/td0m/pub-sub/pkg/clients"
 )
 
 func main() {
 	host := "localhost:8080/ws"
 	events := []string{"users!"}
-	url := fmt.Sprintf("ws://%s?events=%s", host, strings.Join(events, ","))
-	ws, _, err := websocket.DefaultDialer.Dial(url, http.Header{})
+	client, err := clients.NewWsClient(host, events)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	defer client.Close()
+
 	done := make(chan struct{})
 
 	go func() {
 		defer close(done)
 		for {
-			event, payload := readLine("event"), readLine("payload")
-			ws.WriteJSON(map[string]string{"event": event, "payload": payload})
+			msg, err := client.ReadMessage()
+			if err != nil {
+				return
+			}
+			fmt.Println(msg)
 		}
 	}()
 
 	go func() {
 		defer close(done)
 		for {
-			var msg interface{}
-			err := ws.ReadJSON(&msg)
-			if err != nil {
-				close(done)
-			}
-			fmt.Println(msg)
+			event, payload := readLine("event"), readLine("payload")
+			client.Emit(event, payload)
 		}
 	}()
 
