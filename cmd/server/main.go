@@ -43,11 +43,13 @@ func (self *Hub) Run() {
 		case client := <-self.register:
 			self.clients[client.id] = client
 			log.Println("+ " + client.id)
+			go self.emitClientUpdate()
 		case client := <-self.unregister:
 			if _, ok := self.clients[client.id]; ok {
 				log.Println("- " + client.id)
 				close(client.send)
 				delete(self.clients, client.id)
+				go self.emitClientUpdate()
 			}
 		case msg := <-self.emit:
 			for _, v := range self.clients {
@@ -56,6 +58,16 @@ func (self *Hub) Run() {
 		}
 
 	}
+}
+
+const EVENT_CLIENT_UPDATE = "users!"
+
+func (self *Hub) emitClientUpdate() {
+	clients := map[string][]string{}
+	for id, client := range self.clients {
+		clients[id] = client.events
+	}
+	self.emit <- Message{Event: EVENT_CLIENT_UPDATE, Payload: clients}
 }
 
 func (self *Hub) Register(client *Client) {
