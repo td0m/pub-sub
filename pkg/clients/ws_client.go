@@ -13,8 +13,12 @@ type wsClient struct {
 	ws *websocket.Conn
 }
 
-func NewWsClient(host, token string, events []string) (*wsClient, error) {
-	url := fmt.Sprintf("ws://%s?events=%s", host, strings.Join(events, ","))
+func NewWsClient(host, token string, events []string, secure bool) (*wsClient, error) {
+	protocol := "ws"
+	if secure {
+		protocol = "wss"
+	}
+	url := fmt.Sprintf("%s://%s?events=%s", protocol, host, strings.Join(events, ","))
 	ws, _, err := websocket.DefaultDialer.Dial(url, http.Header{
 		"Authorization": []string{"Bearer " + token},
 	})
