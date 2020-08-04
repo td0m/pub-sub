@@ -57,16 +57,20 @@ func GetTokenClaims(tokenString string) (*Claims, error) {
 func WithClaims(f func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := r.Header.Get("Authorization")
-		if !strings.Contains(tokenStr, " ") {
-			http.Error(w, "no authorization header", http.StatusBadRequest)
-			return
+		if len(tokenStr) > 0 {
+			if !strings.Contains(tokenStr, " ") {
+				http.Error(w, "no authorization header", http.StatusBadRequest)
+				return
+			}
+			parts := strings.Split(tokenStr, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				http.Error(w, "invalid authorization header. should be in form of: 'Bearer token'", http.StatusBadRequest)
+				return
+			}
+			tokenStr = parts[1]
+		} else {
+			tokenStr = r.URL.Query().Get("token")
 		}
-		parts := strings.Split(tokenStr, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			http.Error(w, "invalid authorization header. should be in form of: 'Bearer token'", http.StatusBadRequest)
-			return
-		}
-		tokenStr = parts[1]
 		claims, err := GetTokenClaims(tokenStr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
