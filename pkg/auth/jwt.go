@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
@@ -13,11 +12,8 @@ import (
 
 var secret string
 
-func init() {
-	secret = os.Getenv("JWT_SECRET")
-	if len(secret) == 0 {
-		panic("please provide JWT_SECRET")
-	}
+func Init(jwtSecret string) {
+	secret = jwtSecret
 }
 
 type Claims struct {
@@ -31,6 +27,9 @@ func NewClaims(id string, read, write []string) Claims {
 }
 
 func CreateToken(id string, read, write []string) (string, error) {
+	if len(secret) == 0 {
+		panic("secret missing")
+	}
 	claims := NewClaims(id, read, write)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString([]byte(secret))
@@ -38,12 +37,15 @@ func CreateToken(id string, read, write []string) (string, error) {
 }
 
 func GetTokenClaims(tokenString string) (*Claims, error) {
+	if len(secret) == 0 {
+		panic("secret missing")
+	}
 	claims := Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(secret), nil
 	})
 	if err != nil {
 		return nil, errors.New("failed parsing token with claims")

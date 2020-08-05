@@ -14,9 +14,9 @@ func main() {
 		fmt.Println("Please provide a TOKEN")
 		return
 	}
-	host := "hub.soton.cloud/ws"
-	events := []string{"users", "router.devices"}
-	client, err := clients.NewWsClient(host, token, events, true)
+	host := "localhost:8080/ws"
+	events := []string{"users!"}
+	client, err := clients.NewWsClient(host, token, events, false)
 	if err != nil {
 		fmt.Println(err)
 		return
