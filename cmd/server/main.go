@@ -19,6 +19,7 @@ func init() {
 func main() {
 	h = hub.NewHub()
 	go h.Run()
+	http.HandleFunc("/", handlers.NewHTTPHandler(h))
 	http.HandleFunc("/ws", handlers.NewWsHandler(h))
 	http.ListenAndServe(":8080", nil)
 }
