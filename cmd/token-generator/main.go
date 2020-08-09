@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	auth.Init(os.Getenv("JWT_SECRET"))
 	user := readLine("user")
 	fmt.Println("Please enter permissions separated by a comma")
 	read, write := readLine("read permissions"), readLine("write permissions")
