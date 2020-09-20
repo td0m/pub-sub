@@ -50,6 +50,14 @@ func (self *Hub) Run() {
 	}
 }
 
+func (self *Hub) Clients() map[string][]string {
+	c := map[string][]string{}
+	for k, v := range self.clients {
+		c[k] = v.Events()
+	}
+	return c
+}
+
 func contains(arr []string, value string) bool {
 	for _, v := range arr {
 		if v == value {

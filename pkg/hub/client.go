@@ -13,3 +13,7 @@ func NewClient(id string, events []string) Client {
 func (self *Client) Message() chan Message {
 	return self.send
 }
+
+func (self *Client) Events() []string {
+	return self.events
+}
